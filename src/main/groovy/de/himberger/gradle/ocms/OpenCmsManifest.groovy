@@ -26,6 +26,9 @@ class OpenCmsManifest extends OpenCmsTask {
     def createManifest() {
         def writer = new StringWriter()
         def xml = new MarkupBuilder(writer)
+        def manifestFile = project.file("build/opencms-module/manifest.xml")
+        outputs.file(manifestFile)
+        inputs.files("src/main/opemcms-vfs/")
         xml.export() {
             info() {
                 creator("Admin")
@@ -63,7 +66,7 @@ class OpenCmsManifest extends OpenCmsTask {
                 }
             }
             files() {
-                def vfsFiles = project.fileTree("src/main/opencms-vfs")
+                def vfsFiles = project.fileTree("build/opencms-module")
                 vfsFiles.visit { vfsFile ->
                     def relativePath = "/$vfsFile.path"
                     def uuid = UUID.randomUUID()
@@ -92,6 +95,9 @@ class OpenCmsManifest extends OpenCmsTask {
                 }
             }
         }
+        manifestFile.parentFile.mkdirs()
+        manifestFile.createNewFile()
+        manifestFile.text = writer.toString()
         print writer.toString()
     }
 
