@@ -23,6 +23,7 @@ The project provides an ocmsModule task which creates a manifest.xml and module 
         module {
             group = "com.example.mymodule"
             version = "0.6"
+            moduleClass = "..." // class is a keyword so moduleClass is used
         }
     }
 

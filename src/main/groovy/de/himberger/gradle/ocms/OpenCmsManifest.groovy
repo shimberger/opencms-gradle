@@ -15,9 +15,20 @@ import org.gradle.api.tasks.TaskAction
 class OpenCmsManifest extends OpenCmsTask {
 
     def suffixToResourceType = [
-        'jsp': 'jsp',
-        'txt': 'plain',
-        'xsd': 'plain'
+        'jsp':  'jsp',
+        'tag':  'jsp',
+        'json': 'plain',
+        'png':  'binary',
+        'gif':  'binary',
+        'jpg':  'binary',
+        'jpeg': 'binary',
+        'txt':  'plain',
+        'xml':  'plain',
+        'xml':  'plain',
+        'json': 'plain',
+        'css':  'plain',
+        'js':   'plain',
+        'xsd':  'plain'
     ]
 
     def date = new Date()
@@ -40,7 +51,7 @@ class OpenCmsManifest extends OpenCmsTask {
                 xml.name(project.name)
                 xml.nicename(model.module.nicename)
                 xml.group(model.module.group)
-                // Class
+                xml.class(model.module.moduleClass)
                 xml.description(model.module.description)
                 xml.version(model.module.version)
                 xml.authorname(model.module.authorname)
@@ -52,23 +63,29 @@ class OpenCmsManifest extends OpenCmsTask {
                     // TODO find project dependencies
                 }
                 xml.exportpoints() {
-                    exportpoint(uri: "/system/modules/$project.name/classes",destination: "WEB-INF/classes")
-                    exportpoint(uri: "/system/modules/$project.name/lib",destination: "WEB-INF/lib")
+                    model.module.exportpoints.each {
+                        exportpoint(it)
+                    }
                 }
                 xml.resources() {
-                    resource(uri: "/system/modules/$project.name/")
+                    model.module.resources.each {
+                        resource(uri: it)
+                    }
                 }
                 xml.parameters() {
-
+                    // TODO Parameters
                 }
                 xml.resourcetypes() {
-
+                    model.module.resourcetypesClosure.call(xml)
+                }
+                xml.explorertypes {
+                    model.module.explorertypesClosure.call(xml)
                 }
             }
             files() {
-                def vfsFiles = project.fileTree("build/opencms-module")
+                def vfsFiles = project.fileTree(dir: "build/opencms-module", excludes: ["**/*.meta.json","manifest.xml"])
                 vfsFiles.visit { vfsFile ->
-                    def relativePath = "/$vfsFile.path"
+                    def relativePath = "$vfsFile.path"
                     def uuid = UUID.randomUUID()
                     def type = getOpenCmsResourceType(vfsFile.file)
                     file() {
@@ -83,7 +100,19 @@ class OpenCmsManifest extends OpenCmsTask {
                         usercreated("Admin")
                         flags("0")
                         xml.properties() {
-
+                            getProperties(vfsFile.file).each { property ->
+                                if (property.type != null) {
+                                    xml.property(type: property.type) {
+                                        xml.name(property.name)
+                                        xml.value(property.value)
+                                    }
+                                } else {
+                                    xml.property() {
+                                        xml.name(property.name)
+                                        xml.value(property.value)
+                                    }
+                                }
+                            }
                         }
                         relations() {
 
@@ -98,7 +127,7 @@ class OpenCmsManifest extends OpenCmsTask {
         manifestFile.parentFile.mkdirs()
         manifestFile.createNewFile()
         manifestFile.text = writer.toString()
-        print writer.toString()
+        //print writer.toString()
     }
 
     def now() {
@@ -116,8 +145,32 @@ class OpenCmsManifest extends OpenCmsTask {
         if (file.isDirectory()) {
             return "folder"
         }
+        def suffix = file.name.substring(file.name.lastIndexOf('.')+1)
+        if (suffixToResourceType.containsKey(suffix)) {
+            return suffixToResourceType[suffix]
+        }
         return "binary"
     }
+
+    public getProperties(File file) {
+        def properties = []
+        withMetadata(file) {
+            println "properties: ${it.properties[0].name}"
+            it.properties.each {
+              properties.add(new Expando(name: it.name, value: it.value, type: it.type))
+            }
+        }
+        return properties
+    }
+
+    def withMetadata(File file, Closure closure) {
+        def metadataFile = new File(file.getAbsolutePath() + ".meta.json")
+        if (metadataFile.exists()) {
+            def metadata = new JsonSlurper().parseText(metadataFile.text)
+            closure.call(metadata)
+        }
+    }
+
 
     def getOpenCmsMetadata(File file) {
         def metadataFile = new File(file.getAbsolutePath() + ".meta.json")

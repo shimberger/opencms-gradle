@@ -15,9 +15,10 @@ import org.gradle.api.tasks.bundling.Zip
  */
 class OpenCmsPlugin implements Plugin<Project> {
 
-    def model = new OpenCmsModel()
+    def model
 
     def void apply(Project project) {
+        model = new OpenCmsModel(project)
         project.convention.plugins.opencms = model
 
         def manifestTask = project.tasks.add("ocmsManifest",OpenCmsManifest)
@@ -28,9 +29,7 @@ class OpenCmsPlugin implements Plugin<Project> {
 
         def copyTask = project.tasks.add("ocmsModuleFiles", Copy)
         copyTask.into project.file("build/opencms-module")
-        copyTask.from project.fileTree("src/main/opencms-vfs") {
-
-        }
+        copyTask.from project.fileTree(dir: "src/main/opencms-vfs")
 
         def libsTask = project.tasks.add("ocmsModuleLibs", Copy)
         libsTask.dependsOn "jar"
@@ -46,7 +45,7 @@ class OpenCmsPlugin implements Plugin<Project> {
         //moduleTask.
         moduleTask.baseName = project.name
         moduleTask.destinationDir = project.file("build/libs")
-        moduleTask.from project.fileTree('build/opencms-module')
+        moduleTask.from project.fileTree(dir: 'build/opencms-module', excludes: ["**/*.meta.json"])
         moduleTask.dependsOn "ocmsManifest"
         moduleTask.outputs.upToDateWhen { return false }
 
