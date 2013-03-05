@@ -18,10 +18,10 @@ class OpenCmsManifest extends OpenCmsTask {
         'jsp':  'jsp',
         'tag':  'jsp',
         'json': 'plain',
-        'png':  'binary',
-        'gif':  'binary',
-        'jpg':  'binary',
-        'jpeg': 'binary',
+        'png':  'image',
+        'gif':  'image',
+        'jpg':  'image',
+        'jpeg': 'image',
         'txt':  'plain',
         'xml':  'plain',
         'xml':  'plain',
@@ -155,7 +155,6 @@ class OpenCmsManifest extends OpenCmsTask {
     public getProperties(File file) {
         def properties = []
         withMetadata(file) {
-            println "properties: ${it.properties[0].name}"
             it.properties.each {
               properties.add(new Expando(name: it.name, value: it.value, type: it.type))
             }
