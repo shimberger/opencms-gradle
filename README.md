@@ -10,7 +10,7 @@ Usage
 For now this project should be used by adding it as the buildSrc using a git submodule.
 To do this execute the following commmand in your project root:
 
-    git submodule add git@bitbucket.org:shimberger/opencms-opencms.git buildSrc
+    git submodule add git@bitbucket.org:shimberger/opencms-gradle.git buildSrc
 
 Then enter the following line in your build.gradle
 
